@@ -45,19 +45,29 @@ public class EmployeeCsvReader {
             reader.readNext();
 
             String[] nextLine;
+            // Парсинг файла foreign_names.csv
+            // Формат: id;name;gender;BirtDate;Division;Salary
             while ((nextLine = reader.readNext()) != null) {
                 if (nextLine.length < 6) continue;
 
+                // Пропускаем заголовок
+                if (nextLine[0].trim().equalsIgnoreCase("id")) continue;
+
                 try {
+                    // Парсим поля из CSV
                     int id = Integer.parseInt(nextLine[0].trim());
                     String name = nextLine[1].trim();
                     String gender = nextLine[2].trim();
-                    String deptName = nextLine[3].trim();
-                    double salary = Double.parseDouble(nextLine[4].trim().replace(',', '.'));
-                    LocalDate birthDate = LocalDate.parse(nextLine[5].trim(), dateFormatter);
+                    LocalDate birthDate = LocalDate.parse(nextLine[3].trim(), dateFormatter);
+                    String divisionCode = nextLine[4].trim();  // например "A", "B", "I"
+                    double salary = Double.parseDouble(nextLine[5].trim().replace(',', '.'));
 
-                    Department dept = departmentCache.computeIfAbsent(deptName, Department::new);
+                    // Создаём/получаем подразделение (код из CSV = название)
+                    // ВАЖНО: передаём только название, ID сгенерируется автоматически!
+                    Department dept = departmentCache.computeIfAbsent(divisionCode,
+                            code -> new Department(code));
 
+                    // Создаём сотрудника
                     employees.add(new Employee(id, name, gender, dept, salary, birthDate));
                 } catch (Exception e) {
                     System.err.println(" Ошибка парсинга: " + String.join(";", nextLine));
